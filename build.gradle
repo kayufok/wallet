@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.2.6'
 	id 'io.spring.dependency-management' version '1.1.5'
+	id "org.web3j" version "4.12.0"
 }
 
 group = 'com.ricky.crypto'
