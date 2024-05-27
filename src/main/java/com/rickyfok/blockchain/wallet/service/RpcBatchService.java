@@ -64,12 +64,12 @@ public class RpcBatchService {
 
                 // If response is null, update the status and return an empty list
                 if (rpcAddressList == null || rpcAddressList.isEmpty()) {
-                    logEth.setStatusId(2L);
-                    logEth.setMessage("0 Address");
+                    logEth.setStatusId(2L)
+                            .setMessage("0 Address");
                     return new ArrayList<>();
                 }else {
-                    logEth.setStatusId(2L);
-                    logEth.setMessage(rpcAddressList.size() + " Address");
+                    logEth.setStatusId(2L)
+                            .setMessage(rpcAddressList.size() + " Address");
                 }
                 // Merge rpcAddressList to addressList and de-duplicate
                 synchronized (addressList) {
