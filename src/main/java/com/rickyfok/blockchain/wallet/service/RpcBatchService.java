@@ -2,15 +2,20 @@ package com.rickyfok.blockchain.wallet.service;
 
 import com.rickyfok.blockchain.wallet.entity.Address;
 import com.rickyfok.blockchain.wallet.entity.LogEth;
+import com.rickyfok.blockchain.wallet.model.EthBatchWorker;
 import com.rickyfok.blockchain.wallet.repository.LogEthRepository;
-import com.rickyfok.blockchain.wallet.util.RpcBatchUtil;
+import com.rickyfok.blockchain.wallet.util.Convertor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 public class RpcBatchService {
@@ -25,27 +30,40 @@ public class RpcBatchService {
     AddressService addressService;
 
 
-    public long findMaxBatchId() {
-        Long maxId = logEthRepository.findMaxId();
-        if (maxId == null) {
-            return 0;
-        }
-        return maxId;
+    public Optional<Long> findMaxBatchId() {
+        return Optional.ofNullable(logEthRepository.findMaxId());
     }
 
     public List<LogEth> retrieveEthBatchBySize(int size) {
-
-        // create LogEth objects by size insert into database and return the created LogEth objects
-        List<LogEth> ethBatch = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            LogEth logEth = new LogEth();
-            logEth.setStatusId(1L);
-            ethBatch.add(logEth);
-        }
-        logEthRepository.saveAll(ethBatch);
-        return ethBatch;
+        return IntStream
+                .rangeClosed(1, size)
+                .parallel()
+                .mapToObj(Integer::toString)
+                .map(i -> new LogEth().setStatusId(1L))
+                .map(logEthRepository::save)
+                .toList();
     }
 
+    public void rpcAddressBatchEthStream() {
+
+        var ethBatch = retrieveEthBatchBySize(20);
+
+        var addressList = ethBatch.stream()
+                .parallel()
+                .peek(b -> System.out.println(Thread.currentThread().getName() + "batch id:" + b.getId()))
+                .map(b -> new EthBatchWorker(b,rpcApiService.getApiResponse("eth", Convertor.blockFrom.apply(b.getId()), Convertor.blockTo.apply(b.getId()))))
+                .peek(w -> logEthRepository.save(w.getLogEth().setStatusId(2L).setMessage(w.getAddressList().size() + " Address")))
+                .flatMap(w -> Stream.of(w.getAddressList()))
+                .flatMap(List::stream)
+                .map(s -> new Address().setAddress(s))
+                .toList();
+
+        addressList.stream()
+                .parallel()
+                .filter(a -> addressService.getAddressCount(a.getAddress()) == 0)
+                .forEach(a -> addressService.saveAddress(a));
+
+    }
 
 
     public void rpcAddressBatchEth() {
@@ -60,7 +78,8 @@ public class RpcBatchService {
         for (LogEth logEth : ethBatch) {
             Callable<List<String>> callable = () -> {
                 // Call rpcApiService.getApiResponse()
-                var rpcAddressList = rpcApiService.getApiResponse("eth", RpcBatchUtil.findBlockFrom(logEth.getId()), RpcBatchUtil.findBlockTo(logEth.getId()));
+                var rpcAddressList = rpcApiService
+                        .getApiResponse("eth", Convertor.blockFrom.apply(logEth.getId()), Convertor.blockTo.apply(logEth.getId()));
 
                 // If response is null, update the status and return an empty list
                 if (rpcAddressList == null || rpcAddressList.isEmpty()) {

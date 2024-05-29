@@ -17,19 +17,17 @@ public class RpcBatchController {
 
     @GetMapping("max-batch-id")
     public long findMaxId() {
-        return rpcBatchService.findMaxBatchId();
+        return rpcBatchService.findMaxBatchId().orElse(0L);
     }
 
     @PostMapping("eth-batch-interval/{size}")
     public List<LogEth> retrieveEthBatchBySize(@PathVariable int size) {
-        // system output size
-        System.out.println(size);
         return rpcBatchService.retrieveEthBatchBySize(size);
     }
 
     @PostMapping("eth-batch/run")
     public ResponseEntity<Object> runEthBatch() {
-        rpcBatchService.rpcAddressBatchEth();
+        rpcBatchService.rpcAddressBatchEthStream();
         return ResponseEntity.ok("eth-batch/run");
     }
 

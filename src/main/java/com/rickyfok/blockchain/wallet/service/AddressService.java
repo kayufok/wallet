@@ -14,10 +14,14 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
-
     public List<Address> getAddressList() {
         return addressRepository.findAllByOrderByIdAsc();
     }
+
+    public int getAddressCount(String address) {
+        return addressRepository.countByAddress(address);
+    }
+
 
     public List<Address> getAddressListExist(List<String> addressList) {
         return addressRepository.findByAddressIn(addressList);
@@ -27,21 +31,20 @@ public class AddressService {
         return addressRepository.findByAddressNotIn(addressList);
     }
 
-    public List<Address> saveAddressList(List<String> addressStringList) throws Exception {
-        List<Address> addressList = new ArrayList<>();
-
-        if (addressStringList.isEmpty()) return null;
-
-        addressStringList.forEach(a -> {
-            Address address = new Address();
-            address.setAddress(a);
-            addressList.add(address);
-        });
-        return addressRepository.saveAll(addressList);
-    }
-
-    public void saveAddress(Address address) throws Exception {
-        addressRepository.save(address);
+    public Address saveAddress(Address address){
+        return addressRepository.save(address);
     };
+
+    public List<Address> saveAddressList(List<String> addressStringList) throws Exception {
+
+        return addressStringList
+                .stream()
+                .parallel()
+                .filter(a -> !a.isEmpty())
+                .map(a ->  new Address(null, a))  // new Address
+                .map(a -> addressRepository.save(a)) // return saved address
+                .peek( a -> System.out.println(Thread.currentThread().getName() + "address :" + a.getAddress()))
+                .toList();
+    }
 
 }

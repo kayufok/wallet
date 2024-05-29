@@ -15,4 +15,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     public List<Address> findByAddressNotIn(List<String> addressList);
 
+    public int countByAddress(String address);
+
 }
