@@ -5,6 +5,7 @@ import com.rickyfok.blockchain.wallet.entity.LogEth;
 import com.rickyfok.blockchain.wallet.model.EthBatchWorker;
 import com.rickyfok.blockchain.wallet.repository.LogEthRepository;
 import com.rickyfok.blockchain.wallet.util.Suppiler;
+import com.rickyfok.blockchain.wallet.util.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.rickyfok.blockchain.wallet.util.Convertor.blockFrom;
-import static com.rickyfok.blockchain.wallet.util.Convertor.blockTo;
+import static com.rickyfok.blockchain.wallet.util.Convertor.*;
 
 @Service
 public class RpcBatchService {
@@ -49,23 +49,27 @@ public class RpcBatchService {
 
     public void rpcAddressBatchEthStream() {
 
-        // stream list convertor
-        Function<List<LogEth>, Optional<List<LogEth>>> logEthListOptional = Optional::ofNullable;
-        Function<List<LogEth>, Stream<List<LogEth>>> logEthListListStream = logEthListOptional.andThen(Optional::stream);
-        Function<List<LogEth>, Stream<LogEth>> logEthStream = logEthListListStream.andThen(le -> le.flatMap(List::stream));
-
+        // batch initialization
         var ethBatch = retrieveEthBatchBySize(20);
 
+        // early break when batch is empty
+        if (Validator.isEmptyList.test(ethBatch)) return;
 
-
-        var addressList = logEthStream.apply(ethBatch)
+        var addressList = ethBatch.stream()
                 .peek(b -> System.out.println(Suppiler.threadName.get() + "batch id:" + b.getId()))
-                .map(b -> new EthBatchWorker(b,rpcApiService.getApiResponse("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId()))))
+                .map(b -> {
+                    try {
+                        return new EthBatchWorker(b,rpcApiService.getApiResponse("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId())));
+                    }catch (Exception e) {
+                        return new EthBatchWorker(b.setStatusId(3L).setMessage(stringLength500.apply(e.getLocalizedMessage())), new ArrayList<>());
+                    }
+                })
                 .peek(w -> logEthRepository.save(w.getLogEth().setStatusId(2L).setMessage(w.getAddressList().size() + " Address")))
                 .flatMap(w -> Stream.of(w.getAddressList()))
                 .flatMap(List::stream)
                 .map(s -> new Address().setAddress(s))
                 .toList();
+
 
         addressList.stream()
                 .parallel()

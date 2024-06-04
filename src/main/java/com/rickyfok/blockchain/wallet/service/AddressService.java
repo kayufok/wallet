@@ -2,12 +2,16 @@ package com.rickyfok.blockchain.wallet.service;
 
 import com.rickyfok.blockchain.wallet.entity.Address;
 import com.rickyfok.blockchain.wallet.repository.AddressRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.rickyfok.blockchain.wallet.util.Suppiler.threadName;
+
 @Service
+@Log4j2
 public class AddressService {
 
     @Autowired
@@ -20,7 +24,6 @@ public class AddressService {
     public int getAddressCount(String address) {
         return addressRepository.countByAddress(address);
     }
-
 
     public List<Address> getAddressListExist(List<String> addressList) {
         return addressRepository.findByAddressIn(addressList);
@@ -42,7 +45,7 @@ public class AddressService {
                 .filter(a -> !a.isEmpty())
                 .map(a ->  new Address(null, a))  // new Address
                 .map(a -> addressRepository.save(a)) // return saved address
-                .peek( a -> System.out.println(Thread.currentThread().getName() + "address :" + a.getAddress()))
+                .peek(a -> log.info("{} address: {}", threadName, a.getAddress()))
                 .toList();
     }
 

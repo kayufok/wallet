@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 public class Suppiler {
 
-    // string convertor
+    // string supplier
     public static Supplier<String> threadName = () -> Thread.currentThread().getName();
+    
 }

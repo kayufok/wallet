@@ -20,12 +20,6 @@ public class RpcApiService {
     @Value("${rpc-api.endpoint}")
     private String rpcEndpoint;
 
-    /*
-     * a public function to get the response from api.
-     * API url rpcBaseUrl+rpcPort+rpcEndpoint/blockChain/fromBlock/toBlock
-     * where blockChain,fromBlock,toBlock are input parameter.
-     * the return of API are list of String. when API returns HTTPS CODE 500, return null
-     */
     public List<String> getApiResponse(String blockChain, long fromBlock, long toBlock) {
 
         WebClient webClient = WebClient.builder().baseUrl(rpcBaseUrl+":"+rpcPort).build();

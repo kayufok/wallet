@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 
 public class Validator {
 
-    private static final Predicate<List<?>> isEmptyList = CollectionUtils::isEmpty;
-    private static final Predicate<List<?>> isValidList = isEmptyList.negate();
+    public static final Predicate<List<?>> isEmptyList = CollectionUtils::isEmpty;
+    public static final Predicate<List<?>> isValidList = isEmptyList.negate();
 
 }
