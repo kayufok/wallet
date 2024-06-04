@@ -9,7 +9,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 @Service
 @Log4j2
@@ -55,7 +57,8 @@ public class RpcApiService {
                 .uri("/multichain/ee19a9a6fe722d2ce427185a1f75db2a4d414461037af02cde80e6012c518799")
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<GetBlocksResponse>() {});
+                .bodyToMono(new ParameterizedTypeReference<GetBlocksResponse>() {})
+                 .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(10)));
 
     }
 

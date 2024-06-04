@@ -33,8 +33,8 @@ public class AddressService {
         return addressRepository.findByAddressNotIn(addressList);
     }
 
-    public Address saveAddress(Address address){
-        return addressRepository.save(address);
+    public void saveAddress(Address address){
+        addressRepository.save(address);
     };
 
     public List<Address> saveAddressList(List<String> addressStringList) throws Exception {

@@ -10,12 +10,14 @@ import com.rickyfok.blockchain.wallet.model.ankr.Transaction;
 import com.rickyfok.blockchain.wallet.repository.LogEthRepository;
 import com.rickyfok.blockchain.wallet.util.Suppiler;
 import com.rickyfok.blockchain.wallet.util.Validator;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 import static com.rickyfok.blockchain.wallet.util.Convertor.*;
 
 @Service
+@Log4j2
 public class RpcBatchService {
 
     @Autowired
@@ -54,14 +57,14 @@ public class RpcBatchService {
     public void rpcAddressBatchEthStream() {
 
         // batch initialization
-        var ethBatch = retrieveEthBatchBySize(1);
+        var ethBatch = retrieveEthBatchBySize(5);
 
         // early break when batch is empty
         if (Validator.isEmptyList.test(ethBatch)) return;
 
         var ethBatchWorkerList = ethBatch.stream()
                 .parallel()
-                .peek(b -> System.out.println(Suppiler.threadName.get() + "batch id:" + b.getId()))
+                .peek(b -> log.info("batch id: {}", b.getId()))
                 .map(b -> {
                     try {
                         return new EthBatchWorker(b.setStatusId(2L).setMessage("Success"),rpcApiService.getAnkrGetBlocks("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId()),b.getId()).block());
@@ -75,12 +78,19 @@ public class RpcBatchService {
 
 
         var addressList = ethBatchWorkerList.stream()
+                .peek(x -> log.info("start get gather api return"))
                 .parallel()
+                .filter(Objects::nonNull)
                 .map(GetBlocksResponse::getResult)
+                .filter(Objects::nonNull)
                 .map(Result::getBlocks)
+                .filter(Objects::nonNull)
                 .flatMap(List::stream)
+                .filter(Objects::nonNull)
                 .map(Block::getTransactions)
+                .filter(Objects::nonNull)
                 .flatMap(tx -> Stream.concat(tx.stream().map(Transaction::getFrom), tx.stream().map(Transaction::getTo)))
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(s -> new Address().setAddress(s))
                 .toList();
@@ -88,6 +98,7 @@ public class RpcBatchService {
         addressList.stream()
                 .parallel()
                 .filter(a -> addressService.getAddressCount(a.getAddress()) == 0)
+                .peek(a -> log.info("address: {}", a.getAddress()))
                 .forEach(a -> addressService.saveAddress(a));
 
     }
