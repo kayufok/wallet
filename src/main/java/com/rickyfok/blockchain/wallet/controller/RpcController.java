@@ -1,12 +1,12 @@
 package com.rickyfok.blockchain.wallet.controller;
 
 
+import com.rickyfok.blockchain.wallet.service.RpcApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.rickyfok.blockchain.wallet.service.RpcApiService;
 
 @RestController
 @RequestMapping("/api/rpc-api")

@@ -4,7 +4,7 @@ import com.rickyfok.blockchain.wallet.entity.Address;
 import com.rickyfok.blockchain.wallet.entity.LogEth;
 import com.rickyfok.blockchain.wallet.model.EthBatchWorker;
 import com.rickyfok.blockchain.wallet.repository.LogEthRepository;
-import com.rickyfok.blockchain.wallet.util.Convertor;
+import com.rickyfok.blockchain.wallet.util.Suppiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static com.rickyfok.blockchain.wallet.util.Convertor.blockFrom;
+import static com.rickyfok.blockchain.wallet.util.Convertor.blockTo;
 
 @Service
 public class RpcBatchService {
@@ -46,12 +49,18 @@ public class RpcBatchService {
 
     public void rpcAddressBatchEthStream() {
 
+        // stream list convertor
+        Function<List<LogEth>, Optional<List<LogEth>>> logEthListOptional = Optional::ofNullable;
+        Function<List<LogEth>, Stream<List<LogEth>>> logEthListListStream = logEthListOptional.andThen(Optional::stream);
+        Function<List<LogEth>, Stream<LogEth>> logEthStream = logEthListListStream.andThen(le -> le.flatMap(List::stream));
+
         var ethBatch = retrieveEthBatchBySize(20);
 
-        var addressList = ethBatch.stream()
-                .parallel()
-                .peek(b -> System.out.println(Thread.currentThread().getName() + "batch id:" + b.getId()))
-                .map(b -> new EthBatchWorker(b,rpcApiService.getApiResponse("eth", Convertor.blockFrom.apply(b.getId()), Convertor.blockTo.apply(b.getId()))))
+
+
+        var addressList = logEthStream.apply(ethBatch)
+                .peek(b -> System.out.println(Suppiler.threadName.get() + "batch id:" + b.getId()))
+                .map(b -> new EthBatchWorker(b,rpcApiService.getApiResponse("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId()))))
                 .peek(w -> logEthRepository.save(w.getLogEth().setStatusId(2L).setMessage(w.getAddressList().size() + " Address")))
                 .flatMap(w -> Stream.of(w.getAddressList()))
                 .flatMap(List::stream)
@@ -79,7 +88,7 @@ public class RpcBatchService {
             Callable<List<String>> callable = () -> {
                 // Call rpcApiService.getApiResponse()
                 var rpcAddressList = rpcApiService
-                        .getApiResponse("eth", Convertor.blockFrom.apply(logEth.getId()), Convertor.blockTo.apply(logEth.getId()));
+                        .getApiResponse("eth", blockFrom.apply(logEth.getId()), blockTo.apply(logEth.getId()));
 
                 // If response is null, update the status and return an empty list
                 if (rpcAddressList == null || rpcAddressList.isEmpty()) {
