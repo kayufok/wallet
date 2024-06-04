@@ -34,3 +34,5 @@ build/
 src/main/resources/application.yaml
 *.lock
 /.gradle/
+*.bin
+*.lock
