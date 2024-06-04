@@ -3,6 +3,10 @@ package com.rickyfok.blockchain.wallet.service;
 import com.rickyfok.blockchain.wallet.entity.Address;
 import com.rickyfok.blockchain.wallet.entity.LogEth;
 import com.rickyfok.blockchain.wallet.model.EthBatchWorker;
+import com.rickyfok.blockchain.wallet.model.ankr.Block;
+import com.rickyfok.blockchain.wallet.model.ankr.GetBlocksResponse;
+import com.rickyfok.blockchain.wallet.model.ankr.Result;
+import com.rickyfok.blockchain.wallet.model.ankr.Transaction;
 import com.rickyfok.blockchain.wallet.repository.LogEthRepository;
 import com.rickyfok.blockchain.wallet.util.Suppiler;
 import com.rickyfok.blockchain.wallet.util.Validator;
@@ -50,26 +54,36 @@ public class RpcBatchService {
     public void rpcAddressBatchEthStream() {
 
         // batch initialization
-        var ethBatch = retrieveEthBatchBySize(20);
+        var ethBatch = retrieveEthBatchBySize(1);
 
         // early break when batch is empty
         if (Validator.isEmptyList.test(ethBatch)) return;
 
-        var addressList = ethBatch.stream()
+        var ethBatchWorkerList = ethBatch.stream()
+                .parallel()
                 .peek(b -> System.out.println(Suppiler.threadName.get() + "batch id:" + b.getId()))
                 .map(b -> {
                     try {
-                        return new EthBatchWorker(b,rpcApiService.getApiResponse("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId())));
+                        return new EthBatchWorker(b.setStatusId(2L).setMessage("Success"),rpcApiService.getAnkrGetBlocks("eth", blockFrom.apply(b.getId()), blockTo.apply(b.getId()),b.getId()).block());
                     }catch (Exception e) {
-                        return new EthBatchWorker(b.setStatusId(3L).setMessage(stringLength500.apply(e.getLocalizedMessage())), new ArrayList<>());
+                        return new EthBatchWorker(b.setStatusId(3L).setMessage(stringLength500.apply(e.getLocalizedMessage())), new GetBlocksResponse());
                     }
                 })
-                .peek(w -> logEthRepository.save(w.getLogEth().setStatusId(2L).setMessage(w.getAddressList().size() + " Address")))
-                .flatMap(w -> Stream.of(w.getAddressList()))
-                .flatMap(List::stream)
-                .map(s -> new Address().setAddress(s))
+                .peek(w -> logEthRepository.save(w.getLogEth()))
+                .flatMap(el -> Stream.of(el.getGetBlocksResponse()))
                 .toList();
 
+
+        var addressList = ethBatchWorkerList.stream()
+                .parallel()
+                .map(GetBlocksResponse::getResult)
+                .map(Result::getBlocks)
+                .flatMap(List::stream)
+                .map(Block::getTransactions)
+                .flatMap(tx -> Stream.concat(tx.stream().map(Transaction::getFrom), tx.stream().map(Transaction::getTo)))
+                .distinct()
+                .map(s -> new Address().setAddress(s))
+                .toList();
 
         addressList.stream()
                 .parallel()
@@ -78,84 +92,5 @@ public class RpcBatchService {
 
     }
 
-
-    public void rpcAddressBatchEth() {
-        // retrieve next eth batch list by retrieveEthBatchBySize()
-        var ethBatch = retrieveEthBatchBySize(50);
-        var addressList = new ArrayList<String>();
-
-        // Create an ExecutorService with a fixed thread pool size
-        ExecutorService executor = Executors.newFixedThreadPool(50);
-        List<Future<List<String>>> futures = new ArrayList<>();
-
-        for (LogEth logEth : ethBatch) {
-            Callable<List<String>> callable = () -> {
-                // Call rpcApiService.getApiResponse()
-                var rpcAddressList = rpcApiService
-                        .getApiResponse("eth", blockFrom.apply(logEth.getId()), blockTo.apply(logEth.getId()));
-
-                // If response is null, update the status and return an empty list
-                if (rpcAddressList == null || rpcAddressList.isEmpty()) {
-                    logEth.setStatusId(2L)
-                            .setMessage("0 Address");
-                    return new ArrayList<>();
-                }else {
-                    logEth.setStatusId(2L)
-                            .setMessage(rpcAddressList.size() + " Address");
-                }
-                // Merge rpcAddressList to addressList and de-duplicate
-                synchronized (addressList) {
-                    rpcAddressList.forEach(a -> {
-                        if (!addressList.contains(a)) addressList.add(a);
-                    });
-                }
-
-                return rpcAddressList;
-            };
-
-            // Submit the callable task to the executor service
-            Future<List<String>> future = executor.submit(callable);
-            futures.add(future);
-        }
-
-        // Shutdown the executor service and wait for all tasks to complete
-        executor.shutdown();
-        try {
-            executor.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-
-        // Process the results of the completed tasks
-        for (Future<List<String>> future : futures) {
-            try {
-                var rpcAddressList = future.get();
-                System.out.println("rpcAddressList.size(): " + rpcAddressList.size());
-                // Update the status and message of the corresponding LogEth object
-                logEthRepository.saveAll(ethBatch);
-            } catch (ExecutionException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof SQLIntegrityConstraintViolationException) {
-                    System.out.println("SQLIntegrityConstraintViolationException occurred");
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        // Create Address objects and save them to the database
-        for (String addressString : addressList) {
-            Address address = new Address();
-            address.setAddress(addressString);
-            try {
-                addressService.saveAddress(address);
-            } catch (Exception e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof SQLIntegrityConstraintViolationException) {
-                    System.out.println(addressString);
-                }
-            }
-        }
-    }
 
 }

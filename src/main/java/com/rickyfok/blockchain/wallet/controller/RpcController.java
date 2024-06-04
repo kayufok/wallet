@@ -21,4 +21,12 @@ public class RpcController {
     public ResponseEntity<Object> getApiResponse(@PathVariable  String blockchain, @PathVariable long fromBlock, @PathVariable long toBlock) {
         return ResponseEntity.ok(RpcApiService.getApiResponse(blockchain,fromBlock,toBlock));
     }
+
+    @RequestMapping("ankr/{blockchain}/{fromBlock}/{toBlock}")
+    public ResponseEntity<Object> getAnkrGetBlocks(@PathVariable String blockchain, @PathVariable long fromBlock, @PathVariable long toBlock) {
+        return ResponseEntity.ok(RpcApiService.getAnkrGetBlocks(blockchain, fromBlock, toBlock, 1L).block());
+    }
+
+
+
 }
