@@ -6,10 +6,15 @@ spring:
     driver-class-name=com: com.mysql.cj.jdbc.Driver
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        generate_statistics: true
+        generate_statistics: false
         order_inserts: true
         jdbc:
           batch_size: 100
+rpc-api:
+  base-url: http://127.0.0.1:8080
+  port: 8080
+  endpoint: /api/v1/wallet
+
