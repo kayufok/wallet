@@ -10,6 +10,9 @@ COPY gradle ./gradle
 COPY build.gradle .
 COPY settings.gradle .
 
+# Grant execution permissions for the Gradle wrapper
+RUN chmod +x gradlew
+
 # Copy the rest of the project files
 COPY . .
 
