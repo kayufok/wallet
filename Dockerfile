@@ -1,14 +1,5 @@
 # Stage 1: Build the application
-FROM ubuntu:22.04 AS build
-
-# Install dependencies
-RUN apt-get update && apt-get install -y wget unzip openjdk-21-jdk
-
-# Install Gradle
-RUN wget https://services.gradle.org/distributions/gradle-7.6-bin.zip -P /tmp
-RUN unzip -d /opt/gradle /tmp/gradle-7.6-bin.zip
-ENV GRADLE_HOME=/opt/gradle/gradle-7.6
-ENV PATH=${GRADLE_HOME}/bin:${PATH}
+FROM gradle:jdk-21-and-22-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -26,7 +17,7 @@ COPY . .
 RUN ./gradlew build -x test
 
 # Stage 2: Run the application
-FROM eclipse-temurin:21-jre
+FROM openjdk:21-jre
 
 # Set the working directory in the container
 WORKDIR /app
