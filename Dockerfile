@@ -1,5 +1,12 @@
-# Use a base image that includes OpenJDK 21 and Gradle
-FROM gradle:7.6-jdk21 AS build
+# Stage 1: Build the application
+FROM openjdk:21-jdk AS build
+
+# Install Gradle
+RUN apt-get update && apt-get install -y wget unzip
+RUN wget https://services.gradle.org/distributions/gradle-7.6-bin.zip -P /tmp
+RUN unzip -d /opt/gradle /tmp/gradle-7.6-bin.zip
+ENV GRADLE_HOME=/opt/gradle/gradle-7.6
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
 # Set the working directory in the container
 WORKDIR /app
@@ -10,17 +17,14 @@ COPY gradle ./gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-# Download dependencies
-RUN ./gradlew build -x test --parallel --continue
-
 # Copy the rest of the project files
 COPY . .
 
 # Build the application
-RUN ./gradlew build -x test --parallel --continue
+RUN ./gradlew build -x test
 
-# Use a minimal JRE image to run the application
-FROM eclipse-temurin:21-jre
+# Stage 2: Run the application
+FROM openjdk:21-jre
 
 # Set the working directory in the container
 WORKDIR /app

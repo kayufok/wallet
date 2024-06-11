@@ -30,3 +30,13 @@ docker container run -d \
 ```bash
 docker system prune -a -f
 ```
+
+### Build the application using the following command
+```bash
+docker build -t wallet-app-image .
+```
+
+### start the application using the following command
+```bash
+docker run -p 8080:8080 --name wallet-app --network nginx-net
+```
