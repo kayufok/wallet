@@ -24,16 +24,17 @@ public class EthereumService {
         logEthereum = logEthereumRepository.save(logEthereum);
 
         return Mono.just(logEthereum)
-                .flatMap(this::makeExternalApiCall)
+                .flatMap(this::makeAnkrApiCall)
                 .flatMap(this::saveMessage);
 
     }
 
 
-    private Mono<LogEthereum> makeExternalApiCall(LogEthereum logEthereum) {
+    private Mono<LogEthereum> makeAnkrApiCall(LogEthereum logEthereum) {
         return ankrService
                 .ankrGetBlocksRequestToString(logEthereum.getId())
                 .map(logEthereum::setMessage)
+                .map(log -> log.setStatusId(2L))
                 .onErrorResume(e -> {
                     logEthereum.setStatusId(99L);
                     logEthereum.setMessage(e.getLocalizedMessage());
