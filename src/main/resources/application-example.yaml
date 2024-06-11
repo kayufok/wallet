@@ -10,11 +10,10 @@ spring:
     properties:
       hibernate:
         generate_statistics: false
-        order_inserts: true
+        order_inserts: false
         jdbc:
           batch_size: 100
 rpc-api:
   base-url: http://127.0.0.1:8080
-  port: 8080
   endpoint: /api/v1/wallet
 

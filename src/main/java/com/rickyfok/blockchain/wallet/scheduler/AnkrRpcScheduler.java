@@ -10,9 +10,8 @@ public class AnkrRpcScheduler {
     @Autowired
     private EthereumService ethereumService;
 
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 3000)
     public void logEthereumHandler() {
-        ethereumService.logEthereumHandler()
-                .subscribe();
+        ethereumService.logEthereumHandler().subscribe();
     }
 }
