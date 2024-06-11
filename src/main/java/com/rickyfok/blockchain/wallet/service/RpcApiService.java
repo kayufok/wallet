@@ -27,6 +27,19 @@ public class RpcApiService {
     @Value("${rpc-api.endpoint}")
     private String rpcEndpoint;
 
+    private final WebClient webClient;
+
+    public RpcApiService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://jsonplaceholder.typicode.com/todos/").build();
+    }
+
+    public Mono<String> makeRequest(Long logEthereumId) {
+        return this.webClient.get()
+                .uri("{id}", logEthereumId)
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
     public List<String> getApiResponse(String blockChain, long fromBlock, long toBlock) {
 
         WebClient webClient = WebClient.builder().baseUrl(rpcBaseUrl+":"+rpcPort).build();
