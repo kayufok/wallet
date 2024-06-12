@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM gradle:jdk-21-and-22-alpine AS build
+FROM gradle:jdk21 AS build
 
 # Set the working directory in the container
 WORKDIR /app
