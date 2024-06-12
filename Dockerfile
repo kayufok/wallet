@@ -5,19 +5,19 @@ FROM gradle:jdk21 AS build
 WORKDIR /app
 
 # Copy the Gradle wrapper and the build.gradle files
-COPY gradlew.
-COPY gradle./gradle
-COPY build.gradle.
-COPY settings.gradle.
+COPY gradlew .
+COPY gradle ./gradle
+COPY build.gradle .
+COPY settings.gradle .
 
 # Grant execution permissions for the Gradle wrapper
 RUN chmod +x gradlew
 
 # Copy the rest of the project files
-COPY ..
+COPY . .
 
 # Build the application
-RUN./gradlew build -x test
+RUN ./gradlew build -x test
 
 # Stage 2: Run the application
 FROM openjdk:21-jre
