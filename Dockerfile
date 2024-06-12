@@ -17,7 +17,7 @@ COPY . .
 RUN gradle build --no-daemon
 
 # Stage 2: Run the application
-FROM openjdk:24-jdk-slim
+FROM openjdk:17-jre-slim
 
 # Set the working directory in the container
 WORKDIR /app
