@@ -23,6 +23,9 @@ FROM openjdk:21-jdk
 WORKDIR /app
 
 # Copy the built JAR file from the build stage
+COPY --from=build /home/gradle/src/build/libs /app/
+
+# Copy the built JAR file from the build stage to the correct directory
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/spring-boot-application.jar
 
 # Expose the port that the application will run on
