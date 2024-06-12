@@ -38,5 +38,5 @@ docker build -t wallet-app-image .
 
 ### start the application using the following command
 ```bash
-docker run -p 8080:8080 --name wallet-app --network nginx-net
+docker run -p 8080:8080 --name wallet-app --network nginx-net wallet-app-image:latest
 ```

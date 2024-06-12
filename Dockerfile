@@ -32,4 +32,4 @@ COPY --from=build /home/gradle/src/build/libs/wallet-0.0.1.jar /app/spring-boot-
 EXPOSE 8080
 
 # Set the entry point to run the application
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
+ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions","-jar","/app/spring-boot-application.jar"]
