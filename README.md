@@ -28,7 +28,7 @@ docker container run -d \
 ### Docker housekeeping
 
 ```bash
-docker system prune -a -f
+docker image prune -a -f
 ```
 
 ### Build the application using the following command
