@@ -27,7 +27,7 @@ CREATE TABLE address_ethereum (
 CREATE TABLE log_ethereum (
   id INT AUTO_INCREMENT,
   status_id INT not null,
-  message varchar(500),
+  message MEDIUMTEXT,
   PRIMARY KEY (id)
 );
 
