@@ -7,19 +7,17 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 @Entity
-@Table(name = "log_ethereum")
+@Table(name = "address_temporary")
 @Data
 @Accessors(chain = true, fluent = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class LogEthereum {
+public class AddressTemporary {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long statusId;
-
-    private String message;
+    private String address;
 
 }

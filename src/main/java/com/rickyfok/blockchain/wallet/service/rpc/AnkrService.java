@@ -25,16 +25,6 @@ public class AnkrService {
         this.webClient = webClientBuilder.baseUrl("https://rpc.ankr.com").build();
     }
 
-
-    public Mono<GetBlocksResponse> ankrGetBlocksRequest (Long logEthereumId) {
-        return this.webClient
-                .post()
-                .uri(rpcEndpoint)
-                .bodyValue(prepareGetBlocksRequest(logEthereumId))
-                .retrieve()
-                .bodyToMono(GetBlocksResponse.class);
-    }
-
     public Mono<String> ankrGetBlocksRequestToString (Long logEthereumId) {
         var GetBlocksRequest = prepareGetBlocksRequest(logEthereumId);
         return this.webClient
@@ -56,6 +46,14 @@ public class AnkrService {
     }
 
     private Params prepareRequestParams (Long logEthereumId) {
-        return new Params(Constant.ETHEREUM_CODE, blockFrom.apply(logEthereumId), blockTo.apply(logEthereumId), false, true, true, true);
+        return new Params(
+                Constant.ETHEREUM_CODE
+                , blockFrom.apply(logEthereumId)
+                , blockTo.apply(logEthereumId)
+                , false
+                , true
+                , true
+                , true
+        );
     }
 }
