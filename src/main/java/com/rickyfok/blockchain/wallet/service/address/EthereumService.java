@@ -20,9 +20,13 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.rickyfok.blockchain.wallet.util.Validator.isEmptyList;
+import static com.rickyfok.blockchain.wallet.util.Validator.isValidList;
 
 @Service
 @Log4j2
@@ -72,7 +76,13 @@ public class EthereumService {
     }
 
     public void processRawRpcResponse(){
+        log.info("Processing : {}", new Date());
         var logEthereumList = getLogsByStatusId(1);
+        
+        if (isEmptyList.test(logEthereumList)) {
+            log.info("no records");
+            return;
+        }
 
         var ethereumMessageList = logEthereumList.stream()
                 .map(e -> new EthereumMessage(null,e))
